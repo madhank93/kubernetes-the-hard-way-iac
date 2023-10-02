@@ -124,20 +124,21 @@ instance_image = pulumi.Output.from_input(
     )
 )
 
-key_pair = ec2.get_key_pair(key_name="kubernetes")
+key_pair = ec2.get_key_pair(key_name="kubernetes-key-pair")
 
 instance_type = "t3.micro"
 
 for i in range(2):
     name = f"controller-{i}"
     private_ip = f"10.0.1.1{i}"
-    ec2.Instance(
+    instance = ec2.Instance(
         name,
         ami=instance_image.id,
         instance_type=instance_type,
         key_name=key_pair.key_name,
         vpc_security_group_ids=[security_group.id],
         subnet_id=subnet.id,
+        associate_public_ip_address=True,
         user_data=name,
         private_ip=private_ip,
         tags={"Name": name},
@@ -154,7 +155,7 @@ for i in range(3):
     name = f"worker-{i}"
     user_data = f"name=worker_{i}|pod-cidr=10.200.{i}.0/24"
     private_ip = f"10.0.1.2{i}"
-    ec2.Instance(
+    instance = ec2.Instance(
         name,
         ami=instance_image.id,
         instance_type=instance_type,
