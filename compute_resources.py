@@ -128,10 +128,19 @@ key_pair = ec2.get_key_pair(key_name="kubernetes-key-pair")
 
 instance_type = "t3.micro"
 
-for i in range(2):
-    name = f"controller-{i}"
-    private_ip = f"10.0.1.1{i}"
-    instance = ec2.Instance(
+
+def create_instance(name: str):
+    res = name.split(sep="-")
+    name = f"{res[0]}-{res[1]}"
+    private_ip = (
+        f"10.0.1.2{res[1]}" if res[0].lower() == "worker" else f"10.0.1.1{res[1]}"
+    )
+    user_data = (
+        f"name=worker_{res[1]}|pod-cidr=10.200.{i}.0/24"
+        if res[0].lower() == "worker"
+        else name
+    )
+    return ec2.Instance(
         name,
         ami=instance_image.id,
         instance_type=instance_type,
@@ -139,7 +148,7 @@ for i in range(2):
         vpc_security_group_ids=[security_group.id],
         subnet_id=subnet.id,
         associate_public_ip_address=True,
-        user_data=name,
+        user_data=user_data,
         private_ip=private_ip,
         tags={"Name": name},
         ebs_block_devices=[
@@ -151,20 +160,11 @@ for i in range(2):
         ],
     )
 
-for i in range(3):
-    name = f"worker-{i}"
-    user_data = f"name=worker_{i}|pod-cidr=10.200.{i}.0/24"
-    private_ip = f"10.0.1.2{i}"
-    instance = ec2.Instance(
-        name,
-        ami=instance_image.id,
-        instance_type=instance_type,
-        key_name=key_pair.key_name,
-        vpc_security_group_ids=[security_group.id],
-        subnet_id=subnet.id,
-        associate_public_ip_address=True,
-        user_data=user_data,
-        private_ip=private_ip,
-        tags={"Name": name},
-        ebs_block_devices=[{"device_name": "/dev/sda1", "volume_size": 20}],
-    )
+
+worker_0 = create_instance("worker-0")
+worker_1 = create_instance("worker-1")
+worker_2 = create_instance("worker-2")
+worker_instances = [worker_0, worker_1, worker_2]
+controller_1 = create_instance("controller-0")
+controller_2 = create_instance("controller-1")
+controller_instances = [controller_1, controller_2]
