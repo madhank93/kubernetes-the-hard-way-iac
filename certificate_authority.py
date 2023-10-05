@@ -76,17 +76,17 @@ kubernetes_hostnames = (
     "kubernetes.svc.cluster.local",
 )
 
-kube_api_server = subprocess.run(
-    [
-        f"cfssl gencert \
+
+kube_api_server = command.local.Command(
+    "generate-kube-api-certs",
+    create="cfssl gencert \
             -ca=ca.pem \
             -ca-key=ca-key.pem \
             -config=resource/ca-config.json \
             -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{compute_resources.load_balancer.dns_name},127.0.0.1,{kubernetes_hostnames} \
             -profile=kubernetes \
-            resource/kubernetes-csr.json | cfssljson -bare kubernetes"
-    ],
-    shell=True,
+            resource/kubernetes-csr.json | cfssljson -bare kubernetes",
+    opts=pulumi.ResourceOptions(depends_on=compute_resources.load_balancer),
 )
 
 
@@ -144,7 +144,11 @@ def worker_json(instance: ec2.Instance):
     )
 
 
-for instance in compute_resources.worker_instances:
+for instance in (
+    compute_resources.worker_0,
+    compute_resources.worker_1,
+    compute_resources.worker_2,
+):
     worker_json(instance)
 
 # Copy the appropriate certificates and private keys to each worker instance
@@ -180,7 +184,11 @@ def copy_cert_to_worker(instance: ec2.Instance):
     )
 
 
-for instance in compute_resources.worker_instances:
+for instance in (
+    compute_resources.worker_0,
+    compute_resources.worker_1,
+    compute_resources.worker_2,
+):
     copy_cert_to_worker(instance)
 
 # Copy the appropriate certificates and private keys to each controller instance:
@@ -243,7 +251,10 @@ def copy_cert_to_controller(instance: ec2.Instance):
     )
 
 
-for instance in compute_resources.controller_instances:
+for instance in (
+    compute_resources.controller_0,
+    compute_resources.controller_2,
+):
     copy_cert_to_controller(instance)
 
 result = "Certificate authority part completed"
