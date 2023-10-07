@@ -138,7 +138,7 @@ def worker_json(instance: ec2.Instance):
                 -config=ca-config.json \
                 -hostname={instance_hostname},{instance.public_ip},{instance.private_ip} \
                 -profile=kubernetes \
-                {instance}-csr.json"
+                {instance}-csr.json | cfssljson -bare {instance}"
         ],
         shell=True,
     )
