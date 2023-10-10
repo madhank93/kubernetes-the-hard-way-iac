@@ -76,17 +76,17 @@ kubernetes_hostnames = (
     "kubernetes.svc.cluster.local",
 )
 
-kube_api_server = subprocess.run(
-    [
-        f"cfssl gencert \
+
+kube_api_server = command.local.Command(
+    "generate-kube-api-certs",
+    create="cfssl gencert \
             -ca=ca.pem \
             -ca-key=ca-key.pem \
             -config=resource/ca-config.json \
             -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{compute_resources.load_balancer.dns_name},127.0.0.1,{kubernetes_hostnames} \
             -profile=kubernetes \
-            resource/kubernetes-csr.json | cfssljson -bare kubernetes"
-    ],
-    shell=True,
+            resource/kubernetes-csr.json | cfssljson -bare kubernetes",
+    opts=pulumi.ResourceOptions(depends_on=compute_resources.load_balancer),
 )
 
 
@@ -109,170 +109,157 @@ sa = subprocess.run(
 # Kubelet client certificates
 
 
-def worker_json():
-    for i in range(3):
-        instance = f"worker-{i}"
-        instance_hostname = f"ip-10-0-1-2{i}"
+def worker_json(instance: ec2.Instance):
+    index = instance._name.split(sep="-")[1]
+    instance_name = instance._name
+    instance_hostname = f"ip-10-0-1-2{index}"
 
-        csr_data = {
-            "CN": f"system:node:{instance_hostname}",
-            "key": {"algo": "rsa", "size": 2048},
-            "names": [
-                {
-                    "C": "US",
-                    "L": "Portland",
-                    "O": "system:nodes",
-                    "OU": "Kubernetes The Hard Way",
-                    "ST": "Oregon",
-                }
-            ],
-        }
+    csr_data = {
+        "CN": f"system:node:{instance_hostname}",
+        "key": {"algo": "rsa", "size": 2048},
+        "names": [
+            {
+                "C": "US",
+                "L": "Portland",
+                "O": "system:nodes",
+                "OU": "Kubernetes The Hard Way",
+                "ST": "Oregon",
+            }
+        ],
+    }
 
-        with open(f"{instance}-csr.json", "w") as csr_file:
-            json.dump(csr_data, csr_file, indent=2)
+    with open(f"{instance_name}-csr.json", "w") as csr_file:
+        json.dump(csr_data, csr_file, indent=2)
 
-        instance = ec2.get_instance(
-            filters=[
-                ec2.GetInstanceFilterArgs(
-                    name="tag:Name",
-                    values=[f"{instance}"],
-                )
-            ],
-            opts=pulumi.ResourceOptions(
-                depends_on=compute_resources.load_balancer.dns_name
-            ),
-        )
-
-        subprocess.run(
+    pulumi.Output.all(
+        public_ip=instance.public_ip, private_ip=instance.private_ip
+    ).apply(
+        lambda args: subprocess.run(
             [
                 f"cfssl gencert \
-                    -ca=ca.pem -ca-key=ca-key.pem\
-                    -config=ca-config.json \
-                    -hostname={instance_hostname},{instance.public_ip},{instance.private_ip} \
-                    -profile=kubernetes \
-                    {instance}-csr.json"
+                -ca=ca.pem \
+                -ca-key=ca-key.pem\
+                -config=resource/ca-config.json \
+                -hostname={instance_hostname},{args['public_ip']},{args['private_ip']} \
+                -profile=kubernetes \
+                {instance_name}-csr.json | cfssljson -bare {instance_name}"
             ],
             shell=True,
         )
+    )
 
-        subprocess.run(["cfssljson", "-bare", instance], shell=True)
 
+for instance in (
+    compute_resources.worker_0,
+    compute_resources.worker_1,
+    compute_resources.worker_2,
+):
+    worker_json(instance)
 
 # Copy the appropriate certificates and private keys to each worker instance
 
 
-def copy_cert_to_worker():
-    for i in range(3):
-        instance_name = f"worker-{i}"
-        instance = ec2.get_instance(
-            filters=[
-                ec2.GetInstanceFilterArgs(
-                    name="tag:Name",
-                    values=[f"{instance_name}"],
-                )
-            ],
-            opts=pulumi.ResourceOptions(
-                depends_on=compute_resources.load_balancer.dns_name
-            ),
-        )
+def copy_cert_to_worker(instance: ec2.Instance):
+    index = instance._name.split(sep="-")[1]
+    conn = command.remote.ConnectionArgs(
+        host=instance.public_ip, private_key=private_key, user="ubuntu"
+    )
 
-        conn = command.remote.ConnectionArgs(
-            host=instance.public_ip, private_key=private_key, user="ubuntu"
-        )
+    command.remote.CopyFile(
+        f"copy-file ca.pem to {instance._name}",
+        connection=conn,
+        local_path="ca.pem",
+        remote_path="ca.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file ca.pem",
-            connection=conn,
-            local_path="ca.pem",
-            remote_path="ca.pem",
-            opts=pulumi.ResourceOptions(depends_on=ca),
-        )
+    command.remote.CopyFile(
+        f"copy-file worker key pem to {instance._name}",
+        connection=conn,
+        local_path=f"worker-{index}-key.pem",
+        remote_path=f"worker-{index}-key.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file worker key pem",
-            connection=conn,
-            local_path=f"worker-{i}-key.pem",
-            remote_path=f"worker-{i}-key.pem",
-            opts=pulumi.ResourceOptions(depends_on=ca),
-        )
+    command.remote.CopyFile(
+        f"copy-file worker pem to {instance._name}",
+        connection=conn,
+        local_path=f"worker-{index}.pem",
+        remote_path=f"worker-{index}.pem",
+    )
 
-        command.remote.CopyFile(
-            "copy-file worker pem",
-            connection=conn,
-            local_path=f"worker-{i}.pem",
-            remote_path=f"worker-{i}.pem",
-        )
 
+for instance in (
+    compute_resources.worker_0,
+    compute_resources.worker_1,
+    compute_resources.worker_2,
+):
+    copy_cert_to_worker(instance)
 
 # Copy the appropriate certificates and private keys to each controller instance:
 
 
-def copy_cert_to_controller():
-    for i in range(2):
-        instance_name = f"controller-{i}"
-        instance = ec2.get_instance(
-            filters=[
-                ec2.GetInstanceFilterArgs(
-                    name="tag:Name",
-                    values=[f"{instance_name}"],
-                )
-            ],
-            opts=pulumi.ResourceOptions(
-                depends_on=compute_resources.load_balancer.dns_name
-            ),
-        )
+def copy_cert_to_controller(instance: ec2.Instance):
+    index = instance._name.split(sep="-")[1]
+    # instance_name = f"controller-{index}"
 
-        conn = command.remote.ConnectionArgs(
-            host=instance.public_ip, private_key=private_key, user="ubuntu"
-        )
+    conn = command.remote.ConnectionArgs(
+        host=instance.public_ip, private_key=private_key, user="ubuntu"
+    )
 
-        command.remote.CopyFile(
-            "copy-file ca.pem",
-            connection=conn,
-            local_path="ca.pem",
-            remote_path="ca.pem",
-            opts=pulumi.ResourceOptions(depends_on=ca),
-        )
+    command.remote.CopyFile(
+        f"copy-file ca.pem to {instance._name}",
+        connection=conn,
+        local_path="ca.pem",
+        remote_path="ca.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file ca-key.pem",
-            connection=conn,
-            local_path=f"ca-key.pem",
-            remote_path=f"ca-key.pem",
-            opts=pulumi.ResourceOptions(depends_on=ca),
-        )
+    command.remote.CopyFile(
+        f"copy-file ca-key.pem to {instance._name}",
+        connection=conn,
+        local_path=f"ca-key.pem",
+        remote_path=f"ca-key.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file kubernetes-key.pem",
-            connection=conn,
-            local_path=f"kubernetes-key.pem",
-            remote_path=f"kubernetes-key.pem",
-            opts=pulumi.ResourceOptions(depends_on=kube_api_server),
-        )
+    command.remote.CopyFile(
+        f"copy-file kubernetes-key.pem to {instance._name}",
+        connection=conn,
+        local_path=f"kubernetes-key.pem",
+        remote_path=f"kubernetes-key.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file kubernetes.pem",
-            connection=conn,
-            local_path=f"kubernetes.pem",
-            remote_path=f"kubernetes.pem",
-            opts=pulumi.ResourceOptions(depends_on=kube_api_server),
-        )
+    command.remote.CopyFile(
+        f"copy-file kubernetes.pem to {instance._name}",
+        connection=conn,
+        local_path=f"kubernetes.pem",
+        remote_path=f"kubernetes.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file service-account-key.pem",
-            connection=conn,
-            local_path=f"service-account-key.pem",
-            remote_path=f"service-account-key.pem",
-            opts=pulumi.ResourceOptions(depends_on=sa),
-        )
+    command.remote.CopyFile(
+        f"copy-file service-account-key.pem to {instance._name}",
+        connection=conn,
+        local_path=f"service-account-key.pem",
+        remote_path=f"service-account-key.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
-        command.remote.CopyFile(
-            "copy-file service-account.pem",
-            connection=conn,
-            local_path=f"service-account.pem",
-            remote_path=f"service-account.pem",
-            opts=pulumi.ResourceOptions(depends_on=sa),
-        )
+    command.remote.CopyFile(
+        f"copy-file service-account.pem to {instance._name}",
+        connection=conn,
+        local_path=f"service-account.pem",
+        remote_path=f"service-account.pem",
+        opts=pulumi.ResourceOptions(depends_on=instance),
+    )
 
+
+for instance in (
+    compute_resources.controller_0,
+    compute_resources.controller_2,
+):
+    copy_cert_to_controller(instance)
 
 result = "Certificate authority part completed"
