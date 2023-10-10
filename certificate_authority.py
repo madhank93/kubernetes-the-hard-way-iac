@@ -131,16 +131,21 @@ def worker_json(instance: ec2.Instance):
     with open(f"{instance_name}-csr.json", "w") as csr_file:
         json.dump(csr_data, csr_file, indent=2)
 
-    subprocess.run(
-        [
-            f"cfssl gencert \
-                -ca=ca.pem -ca-key=ca-key.pem\
-                -config=ca-config.json \
-                -hostname={instance_hostname},{instance.public_ip},{instance.private_ip} \
+    pulumi.Output.all(
+        public_ip=instance.public_ip, private_ip=instance.private_ip
+    ).apply(
+        lambda args: subprocess.run(
+            [
+                f"cfssl gencert \
+                -ca=ca.pem \
+                -ca-key=ca-key.pem\
+                -config=resource/ca-config.json \
+                -hostname={instance_hostname},{args['public_ip']},{args['private_ip']} \
                 -profile=kubernetes \
-                {instance}-csr.json | cfssljson -bare {instance}"
-        ],
-        shell=True,
+                {instance_name}-csr.json | cfssljson -bare {instance_name}"
+            ],
+            shell=True,
+        )
     )
 
 
