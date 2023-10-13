@@ -258,7 +258,7 @@ def copy_cert_to_controller(instance: ec2.Instance):
 
 for instance in (
     compute_resources.controller_0,
-    compute_resources.controller_2,
+    compute_resources.controller_1,
 ):
     copy_cert_to_controller(instance)
 
