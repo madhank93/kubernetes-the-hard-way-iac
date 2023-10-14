@@ -4,3 +4,4 @@ venv/
 *.csr
 *-csr.json
 *.kubeconfig
+*.yaml
