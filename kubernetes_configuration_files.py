@@ -110,6 +110,7 @@ for instance in (
 for instance in (
     compute_resources.controller_0,
     compute_resources.controller_1,
+    compute_resources.controller_2,
 ):
     conn = command.remote.ConnectionArgs(
         host=instance.public_ip, private_key=private_key, user="ubuntu"
