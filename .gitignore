@@ -3,3 +3,4 @@ venv/
 *.pem
 *.csr
 *-csr.json
+*.kubeconfig
