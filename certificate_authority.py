@@ -68,26 +68,65 @@ scheduler_cert = subprocess.run(
 
 # Kubernetes API server certificate
 
-kubernetes_hostnames = (
-    "kubernetes",
-    "kubernetes.default",
-    "kubernetes.default.svc",
-    "kubernetes.default.svc.cluster",
-    "kubernetes.svc.cluster.local",
-)
+kubernetes_hostnames = "kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
 
+host_name = "10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{0},127.0.0.1,{1}".format(
+    compute_resources.load_balancer.dns_name, kubernetes_hostnames
+)
 
 kube_api_server = command.local.Command(
     "generate-kube-api-certs",
-    create="cfssl gencert \
+    create=f"cfssl gencert \
             -ca=ca.pem \
             -ca-key=ca-key.pem \
             -config=resource/ca-config.json \
-            -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{compute_resources.load_balancer.dns_name},127.0.0.1,{kubernetes_hostnames} \
+            -hostname={host_name} \
             -profile=kubernetes \
             resource/kubernetes-csr.json | cfssljson -bare kubernetes",
     opts=pulumi.ResourceOptions(depends_on=compute_resources.load_balancer),
 )
+
+# kube_api_server = command.local.Command(
+#     "generate-kube-api-certs",
+#     create=pulumi.Output.all(
+#         public_ip=compute_resources.load_balancer.dns_name,
+#         host_names=kubernetes_hostnames,
+#     ).apply(
+#         lambda args: subprocess.run(
+#             [
+#                 f"cfssl gencert \
+#                     -ca=ca.pem \
+#                     -ca-key=ca-key.pem \
+#                     -config=resource/ca-config.json \
+#                     -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{args['public_ip']},127.0.0.1,{args['host_names']} \
+#                     -profile=kubernetes \
+#                     resource/kubernetes-csr.json | cfssljson -bare kubernetes"
+#             ],
+#             shell=True,
+#         )
+#     ),
+#     opts=pulumi.ResourceOptions(depends_on=compute_resources.load_balancer),
+# )
+
+# kube_api_server = (
+#     pulumi.Output.all(
+#         public_ip=compute_resources.load_balancer.dns_name,
+#         host_names=kubernetes_hostnames,
+#     ).apply(
+#         lambda args: subprocess.run(
+#             [
+#                 f"cfssl gencert \
+#                     -ca=ca.pem \
+#                     -ca-key=ca-key.pem \
+#                     -config=resource/ca-config.json \
+#                     -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{args['public_ip']},127.0.0.1,{args['host_names']} \
+#                     -profile=kubernetes \
+#                     resource/kubernetes-csr.json | cfssljson -bare kubernetes"
+#             ],
+#             shell=True,
+#         )
+#     ),
+# )
 
 
 private_key = util.get_key("kubernetes-key-pair.pem")
@@ -228,7 +267,7 @@ def copy_cert_to_controller(instance: ec2.Instance):
         connection=conn,
         local_path=f"kubernetes-key.pem",
         remote_path=f"kubernetes-key.pem",
-        opts=pulumi.ResourceOptions(depends_on=instance),
+        opts=pulumi.ResourceOptions(depends_on=[instance, kube_api_server]),
     )
 
     command.remote.CopyFile(
@@ -236,7 +275,7 @@ def copy_cert_to_controller(instance: ec2.Instance):
         connection=conn,
         local_path=f"kubernetes.pem",
         remote_path=f"kubernetes.pem",
-        opts=pulumi.ResourceOptions(depends_on=instance),
+        opts=pulumi.ResourceOptions(depends_on=[instance, kube_api_server]),
     )
 
     command.remote.CopyFile(

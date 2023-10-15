@@ -1,5 +1,5 @@
 import pulumi
-from pulumi_aws import ec2, lb
+from pulumi_aws import ec2, lb, get_availability_zones
 
 vpc = ec2.Vpc(
     "vpc",
@@ -9,8 +9,14 @@ vpc = ec2.Vpc(
     tags={"Name": "kubernetes-the-hard-way"},
 )
 
+availability_zone = get_availability_zones().names[0]
+
 subnet = ec2.Subnet(
-    "subnet", vpc_id=vpc.id, cidr_block="10.0.1.0/24", tags={"Name": "kubernetes"}
+    "subnet",
+    availability_zone=availability_zone,
+    vpc_id=vpc.id,
+    cidr_block="10.0.1.0/24",
+    tags={"Name": "kubernetes"},
 )
 
 internet_gateway = ec2.InternetGateway(
@@ -151,6 +157,7 @@ def create_instance(name: str):
         user_data=user_data,
         private_ip=private_ip,
         tags={"Name": name},
+        availability_zone=availability_zone,
         ebs_block_devices=[
             {
                 "device_name": "/dev/sda1",
@@ -167,3 +174,5 @@ worker_2 = create_instance("worker-2")
 controller_0 = create_instance("controller-0")
 controller_1 = create_instance("controller-1")
 controller_2 = create_instance("controller-2")
+
+pulumi.export("Kubernetes-Public-Address", load_balancer.dns_name)
