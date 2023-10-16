@@ -1,0 +1,9 @@
+os:
+  name: linux
+  arch: amd64
+
+kubectl:
+  version: 1.27.4
+
+cfssl:
+  version: 1.6.4

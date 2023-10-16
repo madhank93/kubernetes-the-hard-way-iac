@@ -2,5 +2,9 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "none",
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook": "file:///home/madhan/git/kubernetes-the-hard-way-pulumi/ansible/roles/certificate-authority/tasks/requirement.yml"
+  },
+  "ansible.python.interpreterPath": "/home/madhan/git/kubernetes-the-hard-way-pulumi/venv/bin/python"
 }

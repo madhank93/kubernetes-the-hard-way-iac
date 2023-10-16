@@ -1,0 +1,7 @@
+# This roles install prerequisite client tools in host machine
+#
+- name: Install client tools
+  become: true
+  hosts: localhost
+  roles:
+    - client-tools
