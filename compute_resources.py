@@ -1,5 +1,12 @@
 import pulumi
+import pulumi_aws as aws
 from pulumi_aws import ec2, lb, get_availability_zones
+import pulumi_command as command
+import os
+
+file_path = os.path.expanduser("~/.ssh/")
+public_key = open(f"{file_path}/id_rsa.pub").read()
+private_key = pulumi.Output.secret(open(f"{file_path}/id_rsa").read())
 
 vpc = ec2.Vpc(
     "vpc",
@@ -130,7 +137,7 @@ instance_image = pulumi.Output.from_input(
     )
 )
 
-key_pair = ec2.get_key_pair(key_name="kubernetes-key-pair")
+key_pair = aws.ec2.KeyPair("ec2-key-pair", public_key=public_key)
 
 instance_type = "t3.micro"
 
@@ -174,5 +181,28 @@ worker_2 = create_instance("worker-2")
 controller_0 = create_instance("controller-0")
 controller_1 = create_instance("controller-1")
 controller_2 = create_instance("controller-2")
+
+
+sub_cloud_env = command.local.Command(
+    "substitute-cloud-env",
+    create="cat ansible_vars.yml | envsubst > ansible/group_vars/all.yml && cat ansible_hosts | envsubst > ansible/hosts",
+    environment={
+        "CONTROL_PLANE_IP_0": controller_0.public_ip,
+        "CONTROL_PLANE_IP_1": controller_1.public_ip,
+        "CONTROL_PLANE_IP_2": controller_2.public_ip,
+        "WORKER_PLANE_IP_0": worker_0.public_ip,
+        "WORKER_PLANE_IP_1": worker_1.public_ip,
+        "WORKER_PLANE_IP_2": worker_2.public_ip,
+        "EXTERNAL_IP": load_balancer.dns_name,
+    },
+)
+
+ansible_play_run = command.local.Command(
+    "run-ansible-play-book",
+    create="ansible-playbook ansible/main.yml -i hosts/hosts",
+    opts=pulumi.ResourceOptions(
+        depends_on=sub_cloud_env,
+    ),
+)
 
 pulumi.export("Kubernetes-Public-Address", load_balancer.dns_name)
