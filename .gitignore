@@ -2,6 +2,8 @@
 venv/
 *.pem
 *.csr
-*-csr.json
+*.json
+!settings.json
+!ansible/roles/certificate-authority/templates/*.json
 *.kubeconfig
 *.yaml

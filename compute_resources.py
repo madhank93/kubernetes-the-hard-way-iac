@@ -199,7 +199,7 @@ sub_cloud_env = command.local.Command(
 
 ansible_play_run = command.local.Command(
     "run-ansible-play-book",
-    create="ansible-playbook ansible/main.yml -i hosts/hosts",
+    create="cd ansible && ansible-playbook main.yml -i hosts --user ubuntu --key-file=~/.ssh/id_rsa",
     opts=pulumi.ResourceOptions(
         depends_on=sub_cloud_env,
     ),

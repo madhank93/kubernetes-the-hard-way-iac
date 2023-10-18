@@ -1,7 +1,16 @@
 # This roles install prerequisite client tools in host machine
 #
-- name: Install client tools
+# - name: Install client tools
+#   become: true
+#   hosts: localhost
+#   roles:
+#     - client-tools
+
+- name: Generate certificates
   become: true
-  hosts: localhost
+  hosts:
+    - localhost
+    - controller
+    - worker
   roles:
-    - client-tools
+    - certificate-authority
