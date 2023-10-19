@@ -5,8 +5,6 @@ os:
 kubectl:
   version: 1.27.4
 
-user: ubuntu
-
 cfssl:
   version: 1.6.4
 
@@ -21,13 +19,13 @@ control_plane_ip:
   - 10.0.1.12
 
 control_plane_public_ip:
-  - 107.23.246.115
-  - 34.226.199.9
-  - 54.208.159.166
+  - 3.92.54.93
+  - 18.206.180.197
+  - 107.22.9.111
 
 worker_plane_public_ip:
-  - 52.90.130.230
-  - 54.159.73.49
-  - 3.82.9.94
+  - 3.80.199.70
+  - 50.16.168.29
+  - 54.196.88.145
 
-external_ip: kubernetes-6a367df027dc130c.elb.us-east-1.amazonaws.com
+external_ip: kubernetes-6bf84617f43cd106.elb.us-east-1.amazonaws.com

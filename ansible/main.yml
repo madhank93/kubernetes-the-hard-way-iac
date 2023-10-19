@@ -6,7 +6,7 @@
 #   roles:
 #     - client-tools
 
-- name: Generate certificates
+- name: Generate certificates and copy it to the nodes
   become: true
   hosts:
     - localhost
