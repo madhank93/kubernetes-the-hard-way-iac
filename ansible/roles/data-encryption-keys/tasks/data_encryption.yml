@@ -20,6 +20,6 @@
 - name: Copy the encryption-config.yaml encryption config file to each controller instance
   when: inventory_hostname in groups['controller']
   ansible.builtin.copy:
-    mode: u=rw,g=r,o=r
+    mode: u=rwx,g=r,o=r
     src: encryption-config.yaml
     dest: /home/ubuntu

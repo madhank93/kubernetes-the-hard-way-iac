@@ -6,4 +6,3 @@ venv/
 !settings.json
 !ansible/roles/certificate-authority/templates/*.json
 *.kubeconfig
-*.yaml

@@ -5,6 +5,9 @@ os:
 kubectl:
   version: 1.27.4
 
+kubernetes:
+  version: 1.27.4
+
 cfssl:
   version: 1.6.4
 
