@@ -1,0 +1,3 @@
+---
+- name: Include data_encryption task file
+  ansible.builtin.include_tasks: data_encryption.yml

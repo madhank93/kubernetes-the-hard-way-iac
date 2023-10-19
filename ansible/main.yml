@@ -14,3 +14,20 @@
     - worker
   roles:
     - certificate-authority
+
+- name: Generate kube-config files and copy it to the nodes
+  become: true
+  hosts:
+    - localhost
+    - controller
+    - worker
+  roles:
+    - kubernetes-config-files
+
+- name: Generate data-encryption config files and copy it to the nodes
+  become: true
+  hosts:
+    - localhost
+    - controller
+  roles:
+    - kubernetes-config-files

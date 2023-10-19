@@ -1,0 +1,5 @@
+---
+- name: Include gen_kube_config task file
+  ansible.builtin.include_tasks: gen_kube_config.yml
+- name: Include gen_kube_config task file
+  ansible.builtin.include_tasks: gen_kube_config.yml

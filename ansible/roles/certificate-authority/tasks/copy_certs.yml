@@ -23,21 +23,21 @@
 - name: Copy worker key file into worker node
   when: inventory_hostname in groups['worker']
   loop:
-    - 0
-    - 1
-    - 2
+    - worker-0
+    - worker-1
+    - worker-2
   ansible.builtin.copy:
     mode: u=rw,g=r,o=r
-    src: "worker-{{ item }}-key.pem"
+    src: "{{ item }}-key.pem"
     dest: /home/ubuntu
 
 - name: Copy ca files into worker node
   when: inventory_hostname in groups['worker']
   loop:
-    - 0
-    - 1
-    - 2
+    - worker-0
+    - worker-1
+    - worker-2
   ansible.builtin.copy:
     mode: u=rw,g=r,o=r
-    src: "worker-{{ item }}.pem"
+    src: "{{ item }}.pem"
     dest: /home/ubuntu
