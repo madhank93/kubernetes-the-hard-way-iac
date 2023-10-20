@@ -193,7 +193,7 @@ sub_cloud_env = command.local.Command(
         "WORKER_PLANE_IP_0": worker_0.public_ip,
         "WORKER_PLANE_IP_1": worker_1.public_ip,
         "WORKER_PLANE_IP_2": worker_2.public_ip,
-        "EXTERNAL_IP": load_balancer.dns_name,
+        "KUBERNETES_PUBLIC_ADDRESS": load_balancer.dns_name,
     },
 )
 

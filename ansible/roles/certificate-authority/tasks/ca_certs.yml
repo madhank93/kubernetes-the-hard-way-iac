@@ -98,7 +98,7 @@
             -ca=ca.pem \
             -ca-key=ca-key.pem \
             -config={{ playbook_dir }}/roles/certificate-authority/templates/ca-config.json \
-            -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{{ external_ip }},127.0.0.1,{{ kube_hostname }} \
+            -hostname=10.32.0.1,10.0.1.10,10.0.1.11,10.0.1.12,{{ kubernetes_public_address }},127.0.0.1,{{ kube_hostname }} \
             -profile=kubernetes \
             {{ playbook_dir }}/roles/certificate-authority/templates/kubernetes-csr.json | cfssljson -bare kubernetes
         executable: /bin/bash

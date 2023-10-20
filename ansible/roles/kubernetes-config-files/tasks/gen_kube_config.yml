@@ -13,7 +13,7 @@
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
-            --server=https://{{ external_ip }}:443 \
+            --server=https://{{ kubernetes_public_address }}:443 \
             --kubeconfig={{ item }}.kubeconfig
 
           kubectl config set-credentials system:node:{{ item }} \
@@ -37,7 +37,7 @@
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
-            --server=https://{{ external_ip }}:443 \
+            --server=https://{{ kubernetes_public_address }}:443 \
             --kubeconfig=kube-proxy.kubeconfig
 
           kubectl config set-credentials system:kube-proxy \
