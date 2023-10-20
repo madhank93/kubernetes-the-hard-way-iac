@@ -1,5 +1,5 @@
 ---
-- name: Setup ETCD in controller nodes
+- name: Bootstrap kubernetes controller nodes
   when: inventory_hostname == "controller"
   block:
     - name: Ensure kubernetes directory exists
@@ -17,7 +17,7 @@
       ansible.builtin.unarchive:
         src: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
         dest: /usr/local/bin/{{ item }}
-        remote_src: false
+        remote_src: true
         mode: u=rwx,g=r,o=r
 
     - name: Move pem files into lib folder

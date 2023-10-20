@@ -8,6 +8,18 @@ kubectl:
 kubernetes:
   version: 1.27.4
 
+crictl:
+  version: 1.28.0
+
+runc:
+  version: 1.1.9
+
+cni:
+  version: 1.3.0
+
+containerd:
+  version: 1.7.7
+
 cfssl:
   version: 1.6.4
 
