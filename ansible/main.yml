@@ -6,23 +6,23 @@
 #   roles:
 #     - client-tools
 
-- name: Generate certificates and copy it to the nodes
-  become: true
-  hosts:
-    - localhost
-    - controller
-    - worker
-  roles:
-    - certificate-authority
+# - name: Generate certificates and copy it to the nodes
+#   become: true
+#   hosts:
+#     - localhost
+#     - controller
+#     - worker
+#   roles:
+#     - certificate-authority
 
-- name: Generate kube-config files and copy it to the nodes
-  become: true
-  hosts:
-    - localhost
-    - controller
-    - worker
-  roles:
-    - kubernetes-config-files
+# - name: Generate kube-config files and copy it to the nodes
+#   become: true
+#   hosts:
+#     - localhost
+#     - controller
+#     - worker
+#   roles:
+#     - kubernetes-config-files
 
 - name: Generate data-encryption config files and copy it to the nodes
   become: true
@@ -30,4 +30,11 @@
     - localhost
     - controller
   roles:
-    - kubernetes-config-files
+    - data-encryption-keys
+
+- name: Bootstrap ETCD cluster in the controller nodes
+  become: true
+  hosts:
+    - controller
+  roles:
+    - bootstrapping-etcd

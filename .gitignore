@@ -6,3 +6,6 @@ venv/
 !settings.json
 !ansible/roles/certificate-authority/templates/*.json
 *.kubeconfig
+ansible/group_vars/all.yml
+ansible/hosts
+ansible/encryption-config.yaml

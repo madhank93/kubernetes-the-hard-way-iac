@@ -23,6 +23,9 @@ containerd:
 cfssl:
   version: 1.6.4
 
+etcd:
+  version: 3.4.27
+
 worker_plane_ip:
   - 10.0.1.20
   - 10.0.1.21
@@ -44,3 +47,5 @@ worker_plane_public_ip:
   - $WORKER_PLANE_IP_2
 
 kubernetes_public_address: $KUBERNETES_PUBLIC_ADDRESS
+
+encryption_key: 6SyscoYh/PByzgVP/t3PkIIGQzp2mcSl6gwgy7HFyz4=
