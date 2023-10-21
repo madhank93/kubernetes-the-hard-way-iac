@@ -27,18 +27,6 @@
         - "/etc/etcd/"
         - "/var/lib/etcd"
 
-    # - name: Ensure etcd directory exists
-    #   ansible.builtin.file:
-    #     path: /etc/etcd
-    #     state: directory
-    #     mode: u=rwx,g=r,o=r
-
-    # - name: Ensure var/lib etcd directory exists
-    #   ansible.builtin.file:
-    #     path: /var/lib/etcd
-    #     state: directory
-    #     mode: u=rwx,g=r,o=r
-
     - name: Copy pem files to etcd folder
       ansible.builtin.copy:
         src: "{{ item }}"
@@ -62,14 +50,6 @@
         return_content: true
       changed_when: true
       register: etcd_name
-
-    - name: Print version Internal IP Address
-      ansible.builtin.debug:
-        msg: "Internal IP Address: {{ internal_ip.content }}"
-
-    - name: Print version ETCD_NAME
-      ansible.builtin.debug:
-        msg: "ETCD_NAME: {{ etcd_name.content }}"
 
     - name: Create ETCD systemd unit file
       ansible.builtin.template:

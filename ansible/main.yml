@@ -1,28 +1,28 @@
 # This roles install prerequisite client tools in host machine
 #
-# - name: Install client tools in host machine
-#   become: true
-#   hosts: localhost
-#   roles:
-#     - client-tools
+- name: Install client tools in host machine
+  become: true
+  hosts: localhost
+  roles:
+    - client-tools
 
-# - name: Generate certificates and copy it to the nodes
-#   become: true
-#   hosts:
-#     - localhost
-#     - controller
-#     - worker
-#   roles:
-#     - certificate-authority
+- name: Generate certificates and copy it to the nodes
+  become: true
+  hosts:
+    - localhost
+    - controller
+    - worker
+  roles:
+    - certificate-authority
 
-# - name: Generate kube-config files and copy it to the nodes
-#   become: true
-#   hosts:
-#     - localhost
-#     - controller
-#     - worker
-#   roles:
-#     - kubernetes-config-files
+- name: Generate kube-config files and copy it to the nodes
+  become: true
+  hosts:
+    - localhost
+    - controller
+    - worker
+  roles:
+    - kubernetes-config-files
 
 - name: Generate data-encryption config files and copy it to the nodes
   become: true
@@ -38,3 +38,10 @@
     - controller
   roles:
     - bootstrapping-etcd
+
+- name: Bootstrap the kubernetes control plane
+  become: true
+  hosts:
+    - controller
+  roles:
+    - bootstrapping-kubernetes-controllers

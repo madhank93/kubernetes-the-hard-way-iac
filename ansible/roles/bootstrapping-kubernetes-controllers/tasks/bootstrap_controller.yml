@@ -1,12 +1,15 @@
 ---
 - name: Bootstrap kubernetes controller nodes
-  when: inventory_hostname == "controller"
+  when: inventory_hostname in groups['controller']
   block:
     - name: Ensure kubernetes directory exists
       ansible.builtin.file:
-        path: /etc/kubernetes/config/
+        path: "{{ item }}"
         state: directory
         mode: u=rwx,g=r,o=r
+      loop:
+        - /etc/kubernetes/config/
+        - /var/lib/kubernetes/
 
     - name: Download and Copy Kubernetes binaries
       loop:
@@ -14,10 +17,9 @@
         - kube-controller-manager
         - kube-scheduler
         - kubectl
-      ansible.builtin.unarchive:
-        src: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
-        dest: /usr/local/bin/{{ item }}
-        remote_src: true
+      ansible.builtin.get_url:
+        url: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
+        dest: /usr/local/bin
         mode: u=rwx,g=r,o=r
 
     - name: Move pem files into lib folder
@@ -54,8 +56,8 @@
 
     - name: Copy kubernetes schdeuler file
       ansible.builtin.copy:
-        src: "kube-scheduler.yaml"
-        dest: "/etc/kubernetes/config/kube-scheduler.yml"
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/kube-scheduler.yaml"
+        dest: "/etc/kubernetes/config/kube-scheduler.yaml"
         mode: u=rwx,g=r,o=r
 
     - name: Create kube-scheduler systemd unit file
@@ -91,14 +93,28 @@
         dest: "/etc/hosts"
         mode: u=rwx,g=r,o=r
 
+
+- name: Configure RBAC
+  when: inventory_hostname in groups['controller'] | first
+  block:
+    - name: Copy Cluster role into controller
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/cluster_role.yaml"
+        dest: /home/ubuntu
+        mode: u=rwx,g=r,o=r
+    - name: Copy Cluster role binding into controller
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/cluster_role_binding.yaml"
+        dest: /home/ubuntu
+        mode: u=rwx,g=r,o=r
     - name: Apply cluster role kubernetes file
       ansible.builtin.shell:
         cmd: |
-          kubectl apply -f roles/bootstrapping-kubernetes-controllers/templates/cluster_role.yaml
+          kubectl apply --kubeconfig admin.kubeconfig -f cluster_role.yaml
       changed_when: true
 
     - name: Apply cluster role binding kubernetes file
       ansible.builtin.shell:
         cmd: |
-          kubectl apply -f roles/bootstrapping-kubernetes-controllers/templates/cluster_role_binding.yaml
+          kubectl apply --kubeconfig admin.kubeconfig -f cluster_role_binding.yaml
       changed_when: true
