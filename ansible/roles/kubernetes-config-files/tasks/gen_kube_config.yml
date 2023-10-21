@@ -9,7 +9,6 @@
         - worker-2
       ansible.builtin.shell:
         cmd: |
-          set -o pipefail
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
@@ -33,7 +32,6 @@
     - name: Generate a kubeconfig file for the kube-proxy service
       ansible.builtin.shell:
         cmd: |
-          set -o pipefail
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
@@ -57,7 +55,6 @@
     - name: Generate a kubeconfig file for the kube-controller-manager service
       ansible.builtin.shell:
         cmd: |
-          set -o pipefail
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
@@ -81,7 +78,6 @@
     - name: Generate a kubeconfig file for the kube-scheduler service
       ansible.builtin.shell:
         cmd: |
-          set -o pipefail
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \
@@ -105,7 +101,6 @@
     - name: Generate a kubeconfig file for the admin user
       ansible.builtin.shell:
         cmd: |
-          set -o pipefail
           kubectl config set-cluster kubernetes-the-hard-way \
             --certificate-authority=ca.pem \
             --embed-certs=true \

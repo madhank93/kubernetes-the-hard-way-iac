@@ -34,13 +34,13 @@ control_plane_ip:
   - 10.0.1.12
 
 control_plane_public_ip:
-  - 3.92.54.93
-  - 18.206.180.197
-  - 107.22.9.111
+  - 52.54.213.227
+  - 44.202.10.209
+  - 44.201.178.165
 
 worker_plane_public_ip:
-  - 3.80.199.70
-  - 50.16.168.29
-  - 54.196.88.145
+  - 54.167.183.144
+  - 54.172.161.169
+  - 3.84.112.133
 
-external_ip: kubernetes-6bf84617f43cd106.elb.us-east-1.amazonaws.com
+kubernetes_public_address: kubernetes-17da8dd8157a7341.elb.us-east-1.amazonaws.com
