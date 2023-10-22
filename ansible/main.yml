@@ -45,3 +45,10 @@
     - controller
   roles:
     - bootstrapping-kubernetes-controllers
+
+- name: Bootstrap the kubernetes worker plane
+  become: true
+  hosts:
+    - worker
+  roles:
+    - bootstrapping-kubernetes-workers

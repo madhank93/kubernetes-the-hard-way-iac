@@ -149,7 +149,7 @@ def create_instance(name: str):
         f"10.0.1.2{res[1]}" if res[0].lower() == "worker" else f"10.0.1.1{res[1]}"
     )
     user_data = (
-        f"name=worker_{res[1]}|pod-cidr=10.200.{i}.0/24"
+        f"name=worker-{res[1]}|pod-cidr=10.200.{res[1]}.0/24"
         if res[0].lower() == "worker"
         else name
     )
