@@ -52,3 +52,10 @@
     - worker
   roles:
     - bootstrapping-kubernetes-workers
+
+- name: Configuring kubectl for remote access
+  become: true
+  hosts:
+    - localhost
+  roles:
+    - configuring-kubectl

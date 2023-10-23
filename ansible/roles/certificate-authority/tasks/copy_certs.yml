@@ -9,14 +9,14 @@
     - service-account-key.pem
     - service-account.pem
   ansible.builtin.copy:
-    mode: u=rwx,g=r,o=r
+    mode: u=rwx,g=rx,o=rx
     src: "{{ item }}"
     dest: /home/ubuntu
 
 - name: Copy ca files into worker node
   when: inventory_hostname in groups['worker']
   ansible.builtin.copy:
-    mode: u=rwx,g=r,o=r
+    mode: u=rwx,g=rx,o=rx
     src: ca.pem
     dest: /home/ubuntu
 
@@ -26,7 +26,7 @@
   loop_control:
     index_var: index
   ansible.builtin.copy:
-    mode: u=rwx,g=r,o=r
+    mode: u=rwx,g=rx,o=rx
     src: "worker-{{ index }}-key.pem"
     dest: /home/ubuntu
 
@@ -36,6 +36,6 @@
   loop_control:
     index_var: index
   ansible.builtin.copy:
-    mode: u=rwx,g=r,o=r
+    mode: u=rwx,g=rx,o=rx
     src: "worker-{{ index }}.pem"
     dest: /home/ubuntu

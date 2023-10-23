@@ -6,7 +6,7 @@
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       loop:
         - /etc/kubernetes/config/
         - /var/lib/kubernetes/
@@ -20,7 +20,7 @@
       ansible.builtin.get_url:
         url: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
         dest: /usr/local/bin
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Move pem files into lib folder
       loop:
@@ -34,7 +34,7 @@
       ansible.builtin.copy:
         src: "{{ item }}"
         dest: /var/lib/kubernetes/{{ item }}
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Retrieve Internal IP Address
       ansible.builtin.uri:
@@ -46,25 +46,25 @@
       ansible.builtin.template:
         src: kube-apiserver.service.j2
         dest: /etc/systemd/system/kube-apiserver.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Create kube-controller-manager systemd unit file
       ansible.builtin.template:
         src: kube-controller-manager.service.j2
         dest: /etc/systemd/system/kube-controller-manager.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Copy kubernetes schdeuler file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/kube-scheduler.yaml"
         dest: "/etc/kubernetes/config/kube-scheduler.yaml"
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Create kube-scheduler systemd unit file
       ansible.builtin.template:
         src: kube-scheduler.service.j2
         dest: /etc/systemd/system/kube-scheduler.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Ensure kube-apiserver started
       ansible.builtin.systemd:
@@ -91,7 +91,7 @@
       ansible.builtin.copy:
         src: "hosts"
         dest: "/etc/hosts"
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
 
 - name: Configure RBAC
@@ -101,12 +101,12 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/cluster_role.yaml"
         dest: /home/ubuntu
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
     - name: Copy Cluster role binding into controller
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-controllers/templates/cluster_role_binding.yaml"
         dest: /home/ubuntu
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
     - name: Apply cluster role kubernetes file
       ansible.builtin.shell:
         cmd: |

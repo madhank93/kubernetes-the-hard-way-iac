@@ -1,5 +1,5 @@
 ---
-- name: Generate a kubeconfig file suitable for authenticating as the admin user
+- name: Generate a kubeconfig file suitable for authenticating as the admin user for remote accesss
   when: inventory_hostname == "localhost"
   ansible.builtin.shell:
     cmd: |

@@ -23,7 +23,7 @@
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       loop:
         - "/etc/cni/net.d"
         - "/opt/cni/bin"
@@ -42,7 +42,7 @@
       ansible.builtin.get_url:
         url: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
         dest: /usr/local/bin
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Download and install crictl
       ansible.builtin.unarchive:
@@ -50,20 +50,20 @@
           v{{ crictl.version }}/crictl-v{{ crictl.version }}-{{ os.name }}-{{ os.arch }}.tar.gz"
         dest: /usr/local/bin/
         remote_src: true
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Download and install runc
       ansible.builtin.get_url:
         url: https://github.com/opencontainers/runc/releases/download/v{{ runc.version }}/runc.{{ os.arch }}
         dest: /usr/local/bin/runc
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Download and install cni plugin
       ansible.builtin.unarchive:
         src: https://github.com/containernetworking/plugins/releases/download/v{{ cni.version }}/cni-plugins-{{ os.name }}-{{ os.arch }}-v{{ cni.version }}.tgz
         dest: /opt/cni/bin/
         remote_src: true
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Download and unarchive containerd
       ansible.builtin.unarchive:
@@ -71,7 +71,7 @@
           v{{ containerd.version }}/containerd-{{ containerd.version }}-{{ os.name }}-{{ os.arch }}.tar.gz"
         dest: /tmp
         remote_src: true
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Move the containerd contents to the destination directory
       ansible.builtin.shell:
@@ -93,27 +93,27 @@
       ansible.builtin.template:
         src: 10-bridge.conf.j2
         dest: /etc/cni/net.d/10-bridge.conf
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
 
     - name: Copy loopback network configuration file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/99-loopback.conf"
         dest: /etc/cni/net.d/99-loopback.conf
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Copy the containerd configuration file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/config.toml"
         dest: /etc/containerd/config.toml
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Copy the containerd.service systemd unit file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/containerd.service"
         dest: /etc/systemd/system/containerd.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Retrieve worker name
@@ -138,14 +138,14 @@
       ansible.builtin.template:
         src: kubelet-config.yaml.j2
         dest: /var/lib/kubelet/kubelet-config.yaml
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Create the kubelet.service systemd unit file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kubelet.service"
         dest: /etc/systemd/system/kubelet.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Move the Kubernetes proxy
@@ -158,14 +158,14 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kube-proxy-config.yaml"
         dest: /var/lib/kube-proxy/kube-proxy-config.yaml
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Create the kube-proxy.service systemd unit file
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kube-proxy.service"
         dest: /etc/systemd/system/kube-proxy.service
-        mode: u=rwx,g=r,o=r
+        mode: u=rwx,g=rx,o=rx
       changed_when: true
 
     - name: Start containerd systemd service
