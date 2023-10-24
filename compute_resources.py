@@ -204,22 +204,3 @@ ansible_play_run = command.local.Command(
         depends_on=sub_cloud_env,
     ),
 )
-
-
-egress = aws.ec2.EgressOnlyInternetGateway("egress", vpc_id=vpc.id)
-
-
-# Pod network routes
-for index, instance in enumerate(iterable=[worker_0, worker_1, worker_2]):
-    aws.ec2.Route(
-        f"route-{instance._name}",
-        route_table_id=route_table.id,
-        destination_cidr_block=f"10.200.{index}.0/24",
-        network_interface_id=instance.primary_network_interface_id,
-        opts=pulumi.ResourceOptions(
-            depends_on=ansible_play_run,
-        ),
-    )
-
-
-pulumi.export("Kubernetes-Public-Address", load_balancer.dns_name)
