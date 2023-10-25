@@ -1,0 +1,3 @@
+---
+- name: Install admin_config client tools
+  ansible.builtin.include_tasks: admin_config.yml

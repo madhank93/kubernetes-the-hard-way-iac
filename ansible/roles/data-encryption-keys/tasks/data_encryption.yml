@@ -1,0 +1,15 @@
+---
+- name: Generate encryption key and render yml file
+  when: inventory_hostname == "localhost"
+  block:
+    - name: Generate encryption config file
+      ansible.builtin.template:
+        src: "encryption-config.yaml.j2"
+        dest: "{{ playbook_dir }}/encryption-config.yaml"
+        mode: preserve
+- name: Copy the encryption-config.yaml file to each controller instance
+  when: inventory_hostname in groups['controller']
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: encryption-config.yaml
+    dest: /home/ubuntu

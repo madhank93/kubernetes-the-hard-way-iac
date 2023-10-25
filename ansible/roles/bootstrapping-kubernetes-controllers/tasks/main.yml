@@ -1,0 +1,3 @@
+---
+- name: Include bootstrap_controller task file
+  ansible.builtin.include_tasks: bootstrap_controller.yml

@@ -1,0 +1,190 @@
+---
+- name: Bootstrap worker nodes
+  when: inventory_hostname in groups['worker']
+  block:
+    - name: Update cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install the OS dependencies
+      ansible.builtin.apt:
+        pkg:
+          - socat
+          - conntrack
+          - ipset
+
+    - name: Disable swap
+      ansible.builtin.command:
+        cmd: |
+          sudo swapoff -a
+      changed_when: true
+
+    - name: Ensure folders exists
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: u=rwx,g=rx,o=rx
+      loop:
+        - "/etc/cni/net.d"
+        - "/opt/cni/bin"
+        - "/var/lib/kubelet"
+        - "/var/lib/kube-proxy"
+        - "/var/lib/kubernetes"
+        - "/var/run/kubernetes"
+        - "/etc/containerd"
+        - "tmp"
+
+    - name: Download and copy Kubernetes binaries
+      loop:
+        - kubectl
+        - kube-proxy
+        - kubelet
+      ansible.builtin.get_url:
+        url: https://dl.k8s.io/v{{ kubernetes.version }}/bin/{{ os.name }}/{{ os.arch }}/{{ item }}
+        dest: /usr/local/bin
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Download and install crictl
+      ansible.builtin.unarchive:
+        src: "https://github.com/kubernetes-sigs/cri-tools/releases/download/\
+          v{{ crictl.version }}/crictl-v{{ crictl.version }}-{{ os.name }}-{{ os.arch }}.tar.gz"
+        dest: /usr/local/bin/
+        remote_src: true
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Download and install runc
+      ansible.builtin.get_url:
+        url: https://github.com/opencontainers/runc/releases/download/v{{ runc.version }}/runc.{{ os.arch }}
+        dest: /usr/local/bin/runc
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Download and install cni plugin
+      ansible.builtin.unarchive:
+        src: https://github.com/containernetworking/plugins/releases/download/v{{ cni.version }}/cni-plugins-{{ os.name }}-{{ os.arch }}-v{{ cni.version }}.tgz
+        dest: /opt/cni/bin/
+        remote_src: true
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Download and unarchive containerd
+      ansible.builtin.unarchive:
+        src: "https://github.com/containerd/containerd/releases/download/\
+          v{{ containerd.version }}/containerd-{{ containerd.version }}-{{ os.name }}-{{ os.arch }}.tar.gz"
+        dest: /tmp
+        remote_src: true
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Move the containerd contents to the destination directory
+      ansible.builtin.shell:
+        cmd: sudo mv /tmp/bin/* /bin/
+      changed_when: true
+
+    - name: Retrieve the Pod CIDR range for the current compute instance
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          curl -s http://169.254.169.254/latest/user-data/ \
+            | tr "|" "\n" | grep "^pod-cidr" | cut -d"=" -f2
+      changed_when: false
+      args:
+        executable: /bin/bash
+      register: pod_cidr
+
+    - name: Create bridge network configuration file
+      ansible.builtin.template:
+        src: 10-bridge.conf.j2
+        dest: /etc/cni/net.d/10-bridge.conf
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Copy loopback network configuration file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/99-loopback.conf"
+        dest: /etc/cni/net.d/99-loopback.conf
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Copy the containerd configuration file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/config.toml"
+        dest: /etc/containerd/config.toml
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Copy the containerd.service systemd unit file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/containerd.service"
+        dest: /etc/systemd/system/containerd.service
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Retrieve worker name
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          curl -s http://169.254.169.254/latest/user-data/ \
+            | tr "|" "\n" | grep "^name" | cut -d"=" -f2
+        executable: /bin/bash
+      changed_when: false
+      register: worker_name
+
+    - name: Move the kubelet files
+      ansible.builtin.shell:
+        cmd: |
+          mv {{ worker_name.stdout }}-key.pem {{ worker_name.stdout }}.pem /var/lib/kubelet/
+          mv {{ worker_name.stdout }}.kubeconfig /var/lib/kubelet/kubeconfig
+          mv ca.pem /var/lib/kubernetes/
+      changed_when: true
+
+    - name: Copy the kubelet config file
+      ansible.builtin.template:
+        src: kubelet-config.yaml.j2
+        dest: /var/lib/kubelet/kubelet-config.yaml
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Create the kubelet.service systemd unit file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kubelet.service"
+        dest: /etc/systemd/system/kubelet.service
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Move the Kubernetes proxy
+      ansible.builtin.command:
+        cmd: |
+          sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
+      changed_when: true
+
+    - name: Copy the kube-proxy-config.yaml configuration file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kube-proxy-config.yaml"
+        dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Create the kube-proxy.service systemd unit file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/bootstrapping-kubernetes-workers/templates/kube-proxy.service"
+        dest: /etc/systemd/system/kube-proxy.service
+        mode: u=rwx,g=rx,o=rx
+      changed_when: true
+
+    - name: Start containerd systemd service
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
+    - name: Start kubelet systemd service
+      ansible.builtin.systemd:
+        name: kubelet
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
+    - name: Start kube-proxy systemd service
+      ansible.builtin.systemd:
+        name: kube-proxy
+        state: restarted
+        enabled: true
+        daemon_reload: true

@@ -1,0 +1,51 @@
+os:
+  name: linux
+  arch: amd64
+
+kubectl:
+  version: 1.27.4
+
+kubernetes:
+  version: 1.27.4
+
+crictl:
+  version: 1.28.0
+
+runc:
+  version: 1.1.9
+
+cni:
+  version: 1.3.0
+
+containerd:
+  version: 1.7.7
+
+cfssl:
+  version: 1.6.4
+
+etcd:
+  version: 3.4.27
+
+worker_plane_ip:
+  - 10.0.1.20
+  - 10.0.1.21
+  - 10.0.1.22
+
+control_plane_ip:
+  - 10.0.1.10
+  - 10.0.1.11
+  - 10.0.1.12
+
+control_plane_public_ip:
+  - 3.81.165.95
+  - 18.209.1.76
+  - 54.158.59.183
+
+worker_plane_public_ip:
+  - 34.228.239.141
+  - 54.82.189.231
+  - 54.80.76.60
+
+kubernetes_public_address: kubernetes-808a270725dea7df.elb.us-east-1.amazonaws.com
+
+encryption_key: 6SyscoYh/PByzgVP/t3PkIIGQzp2mcSl6gwgy7HFyz4=

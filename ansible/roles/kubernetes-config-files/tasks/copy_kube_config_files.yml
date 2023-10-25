@@ -1,0 +1,29 @@
+---
+- name: Copy kubeconfig files to each controller instance
+  when: inventory_hostname in groups['controller']
+  loop:
+    - admin.kubeconfig
+    - kube-controller-manager.kubeconfig
+    - kube-scheduler.kubeconfig
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: "{{ item }}"
+    dest: /home/ubuntu
+
+- name: Copy kube-proxy kubeconfig files to worker instance
+  when: inventory_hostname in groups['worker']
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: kube-proxy.kubeconfig
+    dest: /home/ubuntu
+
+- name: Copy worker key file into worker node
+  when: inventory_hostname in groups['worker']
+  loop:
+    - worker-0
+    - worker-1
+    - worker-2
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: "{{ item }}.kubeconfig"
+    dest: /home/ubuntu

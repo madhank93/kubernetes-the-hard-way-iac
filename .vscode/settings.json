@@ -2,5 +2,16 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.formatting.provider": "none"
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.autoIndent": "none",
+    "editor.formatOnSave": true
+  },
+  "ansible.python.interpreterPath": "/home/madhan/git/kubernetes-the-hard-way-pulumi/venv/bin/python",
+  "files.associations": {
+    "**/roles/**/tasks/*.yml": "ansible",
+    "**/roles/**/vars/*.yml": "ansible",
+    "**/roles/**/defaults/*.yml": "ansible",
+    "**/playbooks/**/*.yml": "ansible"
+  }
 }

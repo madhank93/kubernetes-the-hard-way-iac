@@ -1,0 +1,3 @@
+---
+- name: Include install_etcd task file
+  ansible.builtin.include_tasks: install_etcd.yml

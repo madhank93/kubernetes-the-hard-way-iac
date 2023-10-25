@@ -1,0 +1,51 @@
+os:
+  name: linux
+  arch: amd64
+
+kubectl:
+  version: 1.27.4
+
+kubernetes:
+  version: 1.27.4
+
+crictl:
+  version: 1.28.0
+
+runc:
+  version: 1.1.9
+
+cni:
+  version: 1.3.0
+
+containerd:
+  version: 1.7.7
+
+cfssl:
+  version: 1.6.4
+
+etcd:
+  version: 3.4.27
+
+worker_plane_ip:
+  - 10.0.1.20
+  - 10.0.1.21
+  - 10.0.1.22
+
+control_plane_ip:
+  - 10.0.1.10
+  - 10.0.1.11
+  - 10.0.1.12
+
+control_plane_public_ip:
+  - $CONTROL_PLANE_IP_0
+  - $CONTROL_PLANE_IP_1
+  - $CONTROL_PLANE_IP_2
+
+worker_plane_public_ip:
+  - $WORKER_PLANE_IP_0
+  - $WORKER_PLANE_IP_1
+  - $WORKER_PLANE_IP_2
+
+kubernetes_public_address: $KUBERNETES_PUBLIC_ADDRESS
+
+encryption_key: 6SyscoYh/PByzgVP/t3PkIIGQzp2mcSl6gwgy7HFyz4=

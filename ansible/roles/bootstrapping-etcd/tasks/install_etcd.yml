@@ -1,0 +1,65 @@
+---
+- name: Setup ETCD in controller nodes
+  when: inventory_hostname in groups['controller']
+  block:
+    - name: Download ETCD binary
+      ansible.builtin.unarchive:
+        src: https://github.com/etcd-io/etcd/releases/download/v{{ etcd.version }}/etcd-v{{ etcd.version }}-{{ os.name }}-{{ os.arch }}.tar.gz
+        dest: /tmp
+        remote_src: true
+
+    - name: Move etcd files
+      ansible.builtin.copy:
+        src: "/tmp/etcd-v{{ etcd.version }}-{{ os.name }}-{{ os.arch }}/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        remote_src: true
+        mode: u=rwx,g=rx,o=rx
+      loop:
+        - etcd
+        - etcdctl
+
+    - name: Ensure etcd directory exists
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: u=rwx,g=rx,o=rx
+      loop:
+        - "/etc/etcd/"
+        - "/var/lib/etcd"
+
+    - name: Copy pem files to etcd folder
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/etcd/{{ item }}"
+        mode: u=rwx,g=rx,o=rx
+      loop:
+        - ca.pem
+        - kubernetes-key.pem
+        - kubernetes.pem
+
+    - name: Retrieve Internal IP Address
+      ansible.builtin.uri:
+        url: http://169.254.169.254/latest/meta-data/local-ipv4
+        return_content: true
+      register: internal_ip
+      changed_when: true
+
+    - name: Retrieve ETCD_NAME from user-data
+      ansible.builtin.uri:
+        url: http://169.254.169.254/latest/user-data/
+        return_content: true
+      changed_when: true
+      register: etcd_name
+
+    - name: Create ETCD systemd unit file
+      ansible.builtin.template:
+        src: etcd.service.j2
+        dest: /etc/systemd/system/etcd.service
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Enable ETCD
+      ansible.builtin.systemd:
+        name: etcd
+        state: restarted
+        daemon_reload: true
+        enabled: true

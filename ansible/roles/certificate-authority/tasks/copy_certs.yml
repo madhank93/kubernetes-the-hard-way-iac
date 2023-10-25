@@ -1,0 +1,41 @@
+---
+- name: Copy files into controller node
+  when: inventory_hostname in groups['controller']
+  loop:
+    - ca.pem
+    - ca-key.pem
+    - kubernetes-key.pem
+    - kubernetes.pem
+    - service-account-key.pem
+    - service-account.pem
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: "{{ item }}"
+    dest: /home/ubuntu
+
+- name: Copy ca files into worker node
+  when: inventory_hostname in groups['worker']
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: ca.pem
+    dest: /home/ubuntu
+
+- name: Copy worker key file into worker node
+  when: inventory_hostname in groups['worker']
+  loop: "{{ worker_plane_public_ip }}"
+  loop_control:
+    index_var: index
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: "worker-{{ index }}-key.pem"
+    dest: /home/ubuntu
+
+- name: Copy worker pem file into worker node
+  when: inventory_hostname in groups['worker']
+  loop: "{{ worker_plane_public_ip }}"
+  loop_control:
+    index_var: index
+  ansible.builtin.copy:
+    mode: u=rwx,g=rx,o=rx
+    src: "worker-{{ index }}.pem"
+    dest: /home/ubuntu

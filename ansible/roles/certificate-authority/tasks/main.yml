@@ -1,0 +1,5 @@
+---
+- name: Include ca_certs task file
+  ansible.builtin.include_tasks: ca_certs.yml
+- name: Include copy_certs task file
+  ansible.builtin.include_tasks: copy_certs.yml
