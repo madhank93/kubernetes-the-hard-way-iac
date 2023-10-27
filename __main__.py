@@ -7,4 +7,4 @@ import smoke_test
 pulumi.export("Kubernetes-Public-Address", compute_resources.load_balancer.dns_name)
 pulumi.export("route-table", pod_network_routes.route_tables)
 pulumi.export("dns-output", dns_addon.core_dns._name)
-pulumi.export("nginx-srv-url", smoke_test.nginx_url)
+pulumi.export("nginx-url", smoke_test.nginx_url)
