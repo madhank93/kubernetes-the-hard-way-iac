@@ -37,15 +37,15 @@ control_plane_ip:
   - 10.0.1.12
 
 control_plane_public_ip:
-  - 3.81.165.95
-  - 18.209.1.76
-  - 54.158.59.183
+  - 3.238.35.194
+  - 3.237.60.73
+  - 3.236.175.180
 
 worker_plane_public_ip:
-  - 34.228.239.141
-  - 54.82.189.231
-  - 54.80.76.60
+  - 44.203.216.55
+  - 3.236.89.230
+  - 44.198.177.255
 
-kubernetes_public_address: kubernetes-808a270725dea7df.elb.us-east-1.amazonaws.com
+kubernetes_public_address: kubernetes-025a0343c847523d.elb.us-east-1.amazonaws.com
 
 encryption_key: 6SyscoYh/PByzgVP/t3PkIIGQzp2mcSl6gwgy7HFyz4=
