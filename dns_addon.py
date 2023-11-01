@@ -12,7 +12,7 @@ k8s_provider = Provider(
     ),
 )
 
-config = ConfigFile(
+core_dns = ConfigFile(
     "core-dns",
     file="deployments/coredns-1.8.yaml",
     opts=pulumi.ResourceOptions(depends_on=k8s_provider, provider=k8s_provider),
