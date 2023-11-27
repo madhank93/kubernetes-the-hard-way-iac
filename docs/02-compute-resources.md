@@ -1,3 +1,5 @@
+# Provisioning Compute Resources
+
 Let's begin by creating the cloud resources in AWS using Pulumi in Python language.
 
 ### Getting .ssh key content
@@ -217,3 +219,7 @@ The following command brings up the above-specified resources in the AWS cloud i
 ```
 pulumi up -y -s dev
 ```
+
+### High level cloud component architecture
+
+![cloud-arch](/docs/assets/img/compute-resource.png)
